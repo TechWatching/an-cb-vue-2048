@@ -2,12 +2,18 @@ name: Continuous Integration pipeline
 
 on:
   pull_request:
+    branches:
+      - main
+      - lab9-cb
   push:
     branches:
       - main
-      - correction-lab9
+      - lab9-cb
   workflow_dispatch:
-      
+  
+env:
+  BUILD_ARTIFACT_NAME: "package"
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,9 +35,43 @@ jobs:
         run: | 
           pnpm install
           pnpm build
+
+      - name: Typechecking and linting
+        if: github.event_name == 'pull_request'
+        run: |
+          pnpm type-check
+          pnpm lint
+
+      - name: Run unit tests
+        if: github.event_name == 'pull_request'
+        run: pnpm test
       
       - name: Upload build artifact
         uses: actions/upload-artifact@v3
         with:
-            name: package
+            name: ${{env.BUILD_ARTIFACT_NAME}}
             path: dist/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch build artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{env.BUILD_ARTIFACT_NAME}}
+          path: ${{github.workspace}}
+      - name: Deploy to QA
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_QA_TOKEN }}
+          action: "upload"
+          app_location: ${{github.workspace}}
+          skip_app_build: true
+      - name: Deploy to PROD
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_PROD_TOKEN }}
+          action: "upload"
+          app_location: ${{github.workspace}}
+          skip_app_build: true
