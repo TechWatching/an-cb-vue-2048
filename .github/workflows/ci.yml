@@ -9,8 +9,17 @@ on:
     branches:
       - main
       - lab9-cb
+    paths-ignore:
+      - 'docs/**'
+  schedule:
+    - cron: '8 0 * * MON'
   workflow_dispatch:
-  
+    inputs:
+      run_static_analyses:
+        description: 'Run static analyses'
+        required: true
+        default: 'true'
+    
 env:
   BUILD_ARTIFACT_NAME: "package"
 
@@ -37,13 +46,13 @@ jobs:
           pnpm build
 
       - name: Typechecking and linting
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' || github.event.inputs.run_static_analyses == 'true'
         run: |
           pnpm type-check
           pnpm lint
 
       - name: Run unit tests
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' || github.event.inputs.run_static_analyses == 'true'
         run: pnpm test
       
       - name: Upload build artifact
@@ -51,6 +60,7 @@ jobs:
         with:
             name: ${{env.BUILD_ARTIFACT_NAME}}
             path: dist/
+            retention-days: ${{github.ref == 'refs/heads/main' && 7 || 1 }} #https://github.com/actions/runner/issues/409
 
   deploy:
     needs: build
