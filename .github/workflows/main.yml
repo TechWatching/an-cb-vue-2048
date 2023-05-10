@@ -76,12 +76,12 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: ${{env.BUILD_ARTIFACT_NAME}}
-          path: ${{github.workspace}}
+          path: dist
           
       - name: Deploy Azure static web app
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ steps.pulumi.outputs.staticWebAppDeployToken }}
           action: "upload"
-          app_location: ${{github.workspace}}
+          app_location: dist
           skip_app_build: true
