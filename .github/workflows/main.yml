@@ -34,7 +34,7 @@ jobs:
         uses: pulumi/actions@v4.2.1
         with:
           command: up
-          stack-name: teachingiac/an-cb-vue-2048/dev
+          stack-name: teachingiac/an-cb-vue-2048/dev-an
           work-dir: infra
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
